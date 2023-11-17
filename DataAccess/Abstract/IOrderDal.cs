@@ -8,9 +8,8 @@ using System.Threading.Tasks;
 
 namespace DataAccess.Abstract
 {
-    public interface ICategoryDal:IEntitiyRepository<Category>
+    public interface IOrderDal:IEntitiyRepository<Order>
     {
-        //Generic Repository Design Pattern
-       
+
     }
 }

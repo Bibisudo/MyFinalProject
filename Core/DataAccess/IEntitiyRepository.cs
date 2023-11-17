@@ -1,13 +1,11 @@
-﻿using Entities.Abstract;
-using Entities.Concrete;
-using System;
+﻿using Core.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DataAccess.Abstract
+namespace Core.DataAccess
 { //generic constraint - generic sınıfı kısıtlama. T referans tipi olsun diye bir sınır getiriyorum mesela.
     //: class -> referans tip olsun demek. 
     // IEntity: IEntity olabilir ya da IEntitiy'yi implemente eden bir nesne olabilir.
