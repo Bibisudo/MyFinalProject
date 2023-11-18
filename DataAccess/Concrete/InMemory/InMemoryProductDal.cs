@@ -1,5 +1,6 @@
 ﻿using DataAccess.Abstract;
 using Entities.Concrete;
+using Entities.DTO_s;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,6 +66,11 @@ namespace DataAccess.Concrete.InMemory
         {
            return _products.Where(p => p.CategoryId == categoryId).ToList(); //where koşulu içindeki şarta
                                                                              //uyan tüm elemanları yeni bir liste haline getirir ve onu döndürür.
+        }
+
+        public List<ProductDetailDto> GetProductDetails()
+        {
+            throw new NotImplementedException();
         }
 
         public void Update(Product product)
