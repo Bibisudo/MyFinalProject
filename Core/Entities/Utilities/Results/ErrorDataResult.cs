@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Entities.Utilities.Results
 {
-    internal class ErrorDataResult<T> : DataResult<T>
+    public class ErrorDataResult<T> : DataResult<T>
     {
         
         
