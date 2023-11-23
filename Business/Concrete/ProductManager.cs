@@ -35,10 +35,10 @@ namespace Business.Concrete
         {
            //İş Kodları(ör: yetkisi var mı?) buradan geçerse aşağıya devam ediyor, getall metodu çalışıyor.
             
-            if (DateTime.Now.Hour==22)
-            {
-                return new ErrorDataResult<List<Product>>(Messages.MaintenanceTime);    
-            }
+            //if (DateTime.Now.Hour==22)
+            //{
+            //    return new ErrorDataResult<List<Product>>(Messages.MaintenanceTime);    
+            //}
             
             return new SuccessDataResult<List<Product>>(_productDal.GetAll(), Messages.ProductsListed);
         }
