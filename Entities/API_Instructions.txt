@@ -1,0 +1,139 @@
+﻿Solution - ADO.NET,API Ekle
+
+Controllers - sağ tık, Controller ekle - ProductsController: ControllerBase
+
+
+- Bir controller'ın controller olabilmesi için ControllerBase'den inherite edilmesi ve [Api Controller] attribute'unu alması lazım. Attribute bir classla ilgili bilgi varme
+bir imzalama yöntemi.-
+-Route ise bize nasıl istekte bulunacaklar onu gösteriyor.-
+
+Product Controller - Add Reference to : Business, Core, DataAccess, Entities
+[HttpGet]
+public List<Product> Get()
+{
+return new Product{ProductId=1, ProductName="Elma"},
+       new Product{ProductId=2, ProductName="Armut"}
+};
+
+Postman - https://localhost:44337/api/products yapıştır.
+
+Önce kötü kod yazıyoruz. Bağımlılık yaratıcı kod(dependency chain). ProductService'i newle.
+public List<Product> Get()
+{
+   IProductService productService = new ProductManager(new EfProductDal());
+   var Result = productService.GetAll();
+   return result.Data;
+}
+
+Bizim istediğimiz şey loosly coupled. Bu sebeple ctor injection yapacağız.Sonra da IoC Container.
+     IProductService _productService;
+
+        public ProductsController(IProductService productService)
+        {
+             _productService = productService;
+        }
+
+IoC Container: Biri senden IProductService isterse arka planda ProductManager oluştur onu ver. Arka planda sizin yerinize newliyor. 
+Singleton bir tane obje oluşturuyor 1000 tane müşteri gelse de hepsine aynısını veriyor. 
+.NET'in IoC containerı yerine neden Autofac kullanıyoruz. Çünkü bize AOP imkanı veriyor.
+
+Program.cs'e şu kodları yaz:
+        builder.Services.AddSingleton <IProductService,ProductManager>();
+        builder.Services.AddSingleton<IProductDal, EfProductDal>();
+
+
+
+Şimdi resultları ekle.
+ [HttpGet]
+        public IActionResult Get()
+        {
+            
+            
+            var result = _productService.GetAll();
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+            
+
+        }
+
+Şimdi Post'u yaz.
+    [HttpPost]
+        public IActionResult Post(Product product)
+        {
+            var result = _productService.Add(product);
+            if (result.Success) 
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+Postman'de ayarlayıp - ürünü gir - productid'sini yazma, süslü parantezleri unutma.
+ 
+        {
+            
+            "categoryId": 1,
+            "productName": "Bardak",
+            "unitsInStock":45,
+            "unitPrice": 15.0000
+        }
+
+
+ [HttpGet]  [HttpPost] birden fazla kullacağın için bunları bunların içerisine isim/alias ver. 
+ Ör: [HttpGet("getbyid")], [HttpPost("add")]
+
+ Sonra burada verdiğin metod aliasını da bu aliasa göre düzeltebilirsin.
+ public IActionResult Get()'tı bunu public IActionResult GetById() yap mesela.
+
+
+ Postmande çağırırken şöyle: ÖR: https://localhost:44337/api/products/getbyid ya da https://localhost:44337/api/products/getall
+
+ ------------------------------------------------------------------------------------------------------------------------------
+
+ Autofac - 12.Video 
+ IoC yapılandırmasını business'da değil de ....
+
+ DependencyResolvers Dosyası oluştur.
+ Autofac dosyası oluştur. İçine AutofacBusinessModule class'ı aç.
+ AutofacBusinessModule: Module, implemente et.
+ Override yaz tap tap, içini sil içine şu kodu yapıştır:
+
+            builder.RegisterType<ProductManager>().As<IProductService>().SingleInstance();
+            builder.RegisterType<EfProductDal>().As<IProductDal>().SingleInstance();
+ 
+Sonra program.cs'ye gel.
+Şu kodu yapıştır.
+ 
+ var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+builder.Host.ConfigureContainer<ContainerBuilder>(builder => builder.RegisterModule(new AutofacBusinessModule()));
+ 
+AutofacServiceProviderFactory'e sağ tıklayıp Install package.
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Arkadaslar merhaba, olurda Engin hocanin serisinin 12. videosuna gecerseniz orada hoca, autofec'i wep api projemize inject ederken 
+ 33. dkikadan itibaren yazdigi kodlar bizde calismiyor. Kodlari program.cs'te yaziyor. Ancak soz konusu surumde Startup.cs de var
+ ve configurasyonlari buna gore yapilmis. 
+Biliyorsunuz bizde sadece program.cs var ve her seyi configurasyon dahil program.cs de yapiyoruz. 
+O nedenle Engin hocanin yazdigi kodlar bizde calismayacak. 
+Autofac'in dokumantosyonunda da en son Asp.net core 3.0+ nin kodlari var ama onlar da ise yaramiyor. 
+Ise yarayan kod asagidaki gibidir arkadaslar, ben saatlerdir ugrasiyorum sizler de ugrasmayin diye burada paylasiyorum. 
+Kirmizi ile gosterdigim kisimlari program.cs'nize eklerseniz autofac basariyla inject olup calisacaktir arkadaslar.
+(Tabi hocanin derste belirttigi nugetleri de kurmaniz sartiyla) Bilginize.
+(bu arada program class'i ve main metodu public arkadaslar degistirmeden atmisim kusura bakmayin
