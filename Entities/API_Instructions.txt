@@ -93,17 +93,22 @@ Postman'de ayarlayıp - ürünü gir - productid'sini yazma, süslü parantezler
  ------------------------------------------------------------------------------------------------------------------------------
 
  Autofac - 12.Video 
- IoC yapılandırmasını business'da değil de ....
+ IoC yapılandırmasını business'da değil de biraz daha backendde yapmak daha avantajlı. Çünkü bir tane daha API ekledik diyelim o zaman da kullanmak istersek Business içerisinde olsa daha iyi.
+
+ Business - Nuget - Autofac'i ve Autofa.Extras'ı indir. 
 
  DependencyResolvers Dosyası oluştur.
+
  Autofac dosyası oluştur. İçine AutofacBusinessModule class'ı aç.
+
  AutofacBusinessModule: Module, implemente et.
+
  Override yaz tap tap, içini sil içine şu kodu yapıştır:
 
-            builder.RegisterType<ProductManager>().As<IProductService>().SingleInstance();
+            builder.RegisterType<ProductManager>().As<IProductService>().SingleInstance(); //biri senden iproductservice isterse ona productmanager instance'ı ver demek bu.
             builder.RegisterType<EfProductDal>().As<IProductDal>().SingleInstance();
  
-Sonra program.cs'ye gel.
+Sonra program.cs'ye gel. .Net'in IoC'unu değil, Autofac'in IoC'unu kullanacağını söylediğin kod bu.
 Şu kodu yapıştır.
  
  var builder = WebApplication.CreateBuilder(args);
@@ -111,9 +116,39 @@ Sonra program.cs'ye gel.
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(builder => builder.RegisterModule(new AutofacBusinessModule()));
  
-AutofacServiceProviderFactory'e sağ tıklayıp Install package.
+AutofacServiceProviderFactory'e sağ tıklayıp Install package'lı olan seçeneği seç.
+
+Validation - 
+Business koduyla validation kodu farklı şeyler. (doğrulama kodu ne, iş kodu ne? - ikisi farklıdır, birbiri yerine kullanılmaz)
+Doğrulama, bir nesnenin iş kurallarına dahil etmeden önce yapısal olarak uygun olup olmadığını kontrol etmek için kullanılır.
+Mesela ProductName'in uzunluğu 2 karakterden küçükse ekleme yapma bir validasyon kuralı.
+
+Business altında ValidationRules diye bir klasör oluştur. ValidationRules içinde FluentValidation diye bir klasör aç.
+
+Business - Nuget -FluentValidation install.
+
+FluentValidation - add class - public class ProductValidator: AbstractValidator<Product> 
+AbstractValidator FluentValidation'dan geliyor ampülden çöz, Product'ı Entities'den çöz.
+
+ctor injection
+
+public ProductValidator()
+{
+Rulefor(p => p.ProductName).MinimumLength(2); // p'nin productname'nin minumumlength'i iki karakter olmalıdır kuralını bu şekilde yazıyoruz. 
+RuleFor(p => p.UnitPrice).GreaterThanOrEqualTo(10).When(p => p.CategoryId ==1);
+}
+
+Olmayan bir şeyi yazmak -
+RuleFor(p => p.ProductName).Must(StartWithA);
+StartWithA'in altı çizilir, sağ tıkla generate method.
+
+ private bool StartWithA(string arg)
+        {
+            return arg.StartsWith("A"); //A ile başlıyorsa true döner. // arg sana gönderilen product.
+        }
 
  
+ ProductManager'a gel(validation kodlarını çalıştırmak için.)
  
  
  
@@ -125,15 +160,3 @@ AutofacServiceProviderFactory'e sağ tıklayıp Install package.
  
  
  
- 
- 
- Arkadaslar merhaba, olurda Engin hocanin serisinin 12. videosuna gecerseniz orada hoca, autofec'i wep api projemize inject ederken 
- 33. dkikadan itibaren yazdigi kodlar bizde calismiyor. Kodlari program.cs'te yaziyor. Ancak soz konusu surumde Startup.cs de var
- ve configurasyonlari buna gore yapilmis. 
-Biliyorsunuz bizde sadece program.cs var ve her seyi configurasyon dahil program.cs de yapiyoruz. 
-O nedenle Engin hocanin yazdigi kodlar bizde calismayacak. 
-Autofac'in dokumantosyonunda da en son Asp.net core 3.0+ nin kodlari var ama onlar da ise yaramiyor. 
-Ise yarayan kod asagidaki gibidir arkadaslar, ben saatlerdir ugrasiyorum sizler de ugrasmayin diye burada paylasiyorum. 
-Kirmizi ile gosterdigim kisimlari program.cs'nize eklerseniz autofac basariyla inject olup calisacaktir arkadaslar.
-(Tabi hocanin derste belirttigi nugetleri de kurmaniz sartiyla) Bilginize.
-(bu arada program class'i ve main metodu public arkadaslar degistirmeden atmisim kusura bakmayin
