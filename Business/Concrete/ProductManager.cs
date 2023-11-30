@@ -4,8 +4,10 @@ using Business.Constants;
 using Business.ValidationRules.FluentValidation;
 using Core.Aspects.Autofac.Validation;
 using Core.CrossCuttingConcerns.Validation;
+using Core.Entities.Utilities.Business;
 using Core.Entities.Utilities.Results;
 using DataAccess.Abstract;
+using DataAccess.Concrete.Entity_Framework;
 using DataAccess.Concrete.InMemory;
 using Entities.Concrete;
 using Entities.DTO_s;
@@ -21,40 +23,45 @@ namespace Business.Concrete
     public class ProductManager : IProductService
     {
         IProductDal _productDal; //injection
-       
-        public ProductManager(IProductDal productDal)
+        ICategoryService _categoryService;
+
+        public ProductManager(IProductDal productDal, ICategoryService categoryService)
         {
             _productDal = productDal;
-            
+            _categoryService = categoryService;
         }
 
-       //[ValidationAspect(typeof(ProductValidator))]
+
+        //[ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
-        {
-            //business codes
-            if(CheckIfProductCountOfCategoryCorrect(product.CategoryId).Success) 
+        { //business codes
+            IResult result = BusinessRules.Run(CheckIfProductNameExists(product.ProductName), 
+                CheckIfProductCountOfCategoryCorrect(product.CategoryId), CheckIfCategoryLimitExceeded());
+
+            if (result != null)
             {
-                _productDal.Add(product);
-                return new SuccessResult(Messages.ProductAdded);
+                return result;
             }
-            return new ErrorResult();
+            _productDal.Add(product);
+            return new SuccessResult(Messages.ProductAdded);
+
         }
 
         public IDataResult<List<Product>> GetAll()
         {
-           //İş Kodları(ör: yetkisi var mı?) buradan geçerse aşağıya devam ediyor, getall metodu çalışıyor.
-            
+            //İş Kodları(ör: yetkisi var mı?) buradan geçerse aşağıya devam ediyor, getall metodu çalışıyor.
+
             //if (DateTime.Now.Hour==22)
             //{
             //    return new ErrorDataResult<List<Product>>(Messages.MaintenanceTime);    
             //}
-            
+
             return new SuccessDataResult<List<Product>>(_productDal.GetAll(), Messages.ProductsListed);
         }
 
         public IDataResult<List<Product>> GetAllByCategoryId(int id)
         {
-            return new SuccessDataResult<List<Product>>( _productDal.GetAll(p=>p.CategoryId==id));
+            return new SuccessDataResult<List<Product>>(_productDal.GetAll(p => p.CategoryId == id));
         }
 
 
@@ -84,12 +91,22 @@ namespace Business.Concrete
             return new SuccessResult();
         }
 
-        private IResult CheckIfProductNameExists ( string productName) 
+        private IResult CheckIfProductNameExists(string productName)
         {
             var result = _productDal.GetAll(p => p.ProductName == productName).Any();
             if (result) //result true demek bu. Yani böyle bir data varsa. ----  !result yazsaydık result false demekti.
-            { 
+            {
                 return new ErrorResult(Messages.ProductNameAlreadyExists);
+            }
+            return new SuccessResult();
+        }
+
+        private IResult CheckIfCategoryLimitExceeded()
+        {
+            var result = _categoryService.GetAll();
+            if (result.Data.Count>15)
+            {
+                return new ErrorResult(Messages.CategoryLimitExceeded);
             }
             return new SuccessResult();
         }
