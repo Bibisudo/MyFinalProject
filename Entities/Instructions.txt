@@ -416,7 +416,7 @@ Peki AspectIntercepterSelectorda ne yapıyoruz.
     Kısaca Autofac bütün sınıflar için önce AspectInterceptorSelector()'ı çağırıyor aspectlerini arıyor.
 
 -----------------------
-
+13.videonun notlarını yaz
 -----------------------
 
 
